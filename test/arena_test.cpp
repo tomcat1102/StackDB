@@ -54,5 +54,5 @@ int main () {
             assert((int(p[b]) & 0xff) == i % 256);
         }
     }
-    std::cout << "seems arena_test ok!" << std::endl;
+    std::cout << "ok!" << std::endl;
 }

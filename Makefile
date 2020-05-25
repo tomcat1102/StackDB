@@ -5,7 +5,7 @@ all stackdb:
 	cd src && $(MAKE) all
 
 test:
-	cd test && $(MAKE) test
+	@cd test && $(MAKE) --no-print-directory $@
 
 # run a simple helloworld to do minimal testing
 helloworld:

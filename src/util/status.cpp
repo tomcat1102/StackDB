@@ -38,7 +38,7 @@ std::string Status::to_string() const{
     const char *type;
     switch (code()) {
         case Code::Ok:              type = "OK"; break;
-        case Code::NotFound:        type = "NotFound"; break;
+        case Code::NotFound:        type = "NotFound: "; break;
         case Code::Corruption:      type = "Corruption: "; break;
         case Code::NotSupported:    type = "Not implemented: "; break;
         case Code::InvalidArgument: type = "Invalid argument: "; break;

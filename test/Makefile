@@ -1,6 +1,6 @@
 # stackdb test makefile
 CXX = g++
-CXXFLAGS = -Wall -g -I../src
+CXXFLAGS = -Wall -g -I../src -I../include
 MAKEFLAGS = --warn-undefined-variables
 # suppress warnings for these
 CPPFLAGS=
@@ -16,13 +16,13 @@ EXECUTE = $(patsubst ./%.cpp, %, $(SOURCES))
 # specific rules
 test: stackdb $(OBJECTS) $(EXECUTE)
 	@for test in $(EXECUTE); do \
-		echo "\nRunning tests in $$test:" ;\
+		echo "Running $$test:" ;\
 		./$$test ;\
-		echo "finished ...ok\n" ;\
+		echo "----------------" ;\
 	done
 
 stackdb:
-	cd ../src && $(MAKE)
+	@cd ../src && $(MAKE) --silent
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTE) .depend
@@ -30,12 +30,13 @@ clean:
 # general rules
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 
-%: %.o
-	$(CXX) $(CXXFLAGS) -o $@ $< $(shell find ../src \( -name '*.o' ! -name '*helloworld.o' \))
+
+%: %.o $(shell find ../src \( -name '*.o' ! -name '*helloworld.o' \))
+	$(CXX) $(CXXFLAGS) -o $@ $^ 
 
 # generate depencies to headers
 .depend:
-	$(CXX) $(CXXFLAGS) -MM $(SOURCES) > .depend
+	@$(CXX) $(CXXFLAGS) -MM $(SOURCES) > .depend
 -include .depend
 
 .PHONY: .depend
