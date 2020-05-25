@@ -1,4 +1,8 @@
 # stackdb makefile
+ifndef PREFIX
+ $(error Please use outermost makefile in stackdb directory)
+endif
+
 # compiler and make flags
 export CXX = g++
 export CXXFLAGS = -Wall -g -I$(PREFIX)/src -I../include
