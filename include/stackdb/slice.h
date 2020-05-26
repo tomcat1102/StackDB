@@ -29,7 +29,7 @@ namespace stackdb {
         }
 
         void remove_prefix(size_t n) {
-            assert(n < size());
+            assert(n <= size());
             sdata += n;
             ssize -= n;
         }
