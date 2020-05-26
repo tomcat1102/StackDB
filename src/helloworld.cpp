@@ -5,15 +5,19 @@ using namespace std;
 #include "stackdb/slice.h"
 #include "stackdb/iterator.h"
 #include "stackdb/status.h"
+#include "db/skiplist.h"
+#include "util/arena.h"
+#include "util/random.h"
 using namespace stackdb;
 
-class TestIterator: public Iterator {
-    void register_cleanup(cleanup_func func, void *arg1, void *arg2) {
-        
-    }
+class A {
+public:
+    A(int a): a(a) {}
+    int a;
 };
 
 int main() {
-
+    A a(10);
     cout << "hello world" << endl;
+    cout << "a: " << a.a << endl;
 }

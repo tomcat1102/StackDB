@@ -57,8 +57,8 @@ namespace stackdb {
             void seek_to_first() override {}
             void seek_to_last() override {}
             void seek(const Slice &target) override {}
-            void next() override {}
-            void prev() override {}
+            void next() override { assert(false); }
+            void prev() override { assert(false); }
             Slice key() override {
                 assert(false);
                 return Slice();

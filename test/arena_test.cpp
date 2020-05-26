@@ -13,7 +13,7 @@ int main () {
     std::vector<std::pair<size_t, char*>> allocated;
     Arena arena;
     size_t bytes = 0;
-    crandom rnd(301);
+    Random rnd(301);
 
     for (int i = 0; i < N; i ++) {
         size_t s;

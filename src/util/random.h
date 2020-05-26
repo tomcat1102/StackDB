@@ -5,10 +5,9 @@
 
 namespace stackdb {
     // a simple random number generator
-    // add 'c' to class name since neither random nor rand is available
-    class crandom {
+    class Random {
     public:
-        explicit crandom(uint32_t s): seed(s & 0x7fffffffu) {
+        explicit Random(uint32_t s): seed(s & 0x7fffffffu) {
             // Avoid bad seeds.
             if (seed == 0 || seed == 2147483647L) {
                 seed = 1;

@@ -24,7 +24,9 @@ all: $(OBJECTS)
 clean:
 	rm -f $(OBJECTS) .depend
 
-helloworld: helloworld.o
+.helloworld: helloworld.o
+	@$(CXX) $(CXXFLAGS) -o helloworld $^
+helloworld: .helloworld
 	@./helloworld
 
 # generate depencies with relative paths to targets
