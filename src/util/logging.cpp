@@ -19,6 +19,7 @@ namespace stackdb {
             } else {
                 snprintf(buf, sizeof(buf), "\\x%02x",       // hope it's right
                     static_cast<unsigned int>(c) & 0xff);
+                str->append(buf);
             }
         }
     }
