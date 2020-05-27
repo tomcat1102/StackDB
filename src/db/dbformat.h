@@ -112,7 +112,12 @@ namespace stackdb {
         }
         LookupKey& operator=(const LookupKey&) = delete;
 
-
+        // return a key suitable for lookup in a MemTable
+        Slice memtable_key() const { return Slice(start, end - start); }
+        // return an internal key suitable for passing to a internal iterator
+        Slice internal_key() const { return Slice(key_start, end - key_start); }
+        // return the user key
+        Slice user_key() const { return Slice(key_start, end - key_start - 8); }
 
     private:
         const char *start;      // may point to "space" or new allocated mem
