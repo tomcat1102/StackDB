@@ -16,9 +16,8 @@ EXECUTE = $(patsubst ./%.cpp, %, $(SOURCES))
 # specific rules
 test: stackdb $(OBJECTS) $(EXECUTE)
 	@for test in $(EXECUTE); do \
-		echo "Running $$test:" ;\
+		echo -n "Running $$test: \t" ;\
 		./$$test ;\
-		echo "----------------" ;\
 	done
 
 stackdb:

@@ -5,7 +5,7 @@
 #include "util/logging.h"
 using namespace stackdb;
 
-void consume_decimal_number_test(uint64_t number,  const std::string& padding = "") {
+static void consume_decimal_number_test(uint64_t number,  const std::string& padding = "") {
     std::string decimal_number = number_to_string(number);
     std::string input_string = decimal_number + padding;
 
@@ -20,13 +20,13 @@ void consume_decimal_number_test(uint64_t number,  const std::string& padding = 
     assert(padding.size() ==output.size());
 }
 
-void consume_decimal_number_overflow_test(const std::string& input_string) {
+static void consume_decimal_number_overflow_test(const std::string& input_string) {
     Slice output(input_string);
     uint64_t result;
     assert(!consume_decimal_number(&output, &result));
 }
 
-void consume_decimal_number_no_digits_test(const std::string& input_string) {
+static void consume_decimal_number_no_digits_test(const std::string& input_string) {
     Slice input(input_string);
     Slice output = input;
     uint64_t result;
