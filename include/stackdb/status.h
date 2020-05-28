@@ -22,8 +22,7 @@ namespace stackdb {
         };
 
     public:
-        // constructors and operators
-        Status() noexcept: state(nullptr) {}
+        Status() noexcept: state(nullptr) {}    // default state ok
         Status(const Status& rhs) { state = (rhs.state == nullptr) ? nullptr : copy_state(rhs.state); }
         Status(Status &&rhs) noexcept: state(rhs.state) { rhs.state = nullptr; }
         ~Status() { delete[] state; }

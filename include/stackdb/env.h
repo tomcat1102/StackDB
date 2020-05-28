@@ -11,7 +11,7 @@
 // get fine gain control; e.g., to rate limit file system operations.
 //
 //  all Envs are safe for concurrent thread accesses without sync
-//  TODO: support for Windows OS env
+//  NEED: support for Windows OS env
 
 namespace stackdb {
     class SequentialFile;       // forward class declarations...
@@ -38,7 +38,7 @@ namespace stackdb {
             return Status::NotSupported("new_appendable_file", fname);                                  // not supported by default
         }
         virtual bool file_exists(const std::string &fname) = 0;                                         // return true if fname exists
-        virtual Status get_children(const std::string &dir, std::vector<std::string> *result) = 0;      // store filenames under dir in *result
+        virtual Status get_children(const std::string &dirname, std::vector<std::string> *result) = 0;      // store filenames under dir in *result
         virtual Status remove_file(const std::string &fname) = 0;                                       // delete file. no delete_file as in leveldb
         virtual Status create_dir(const std::string &dirname) = 0;                                      // create dir
         virtual Status remove_dir(const std::string &dirname) = 0;                                      // delete dir. no delete_dir as in leveldb
@@ -89,9 +89,9 @@ namespace stackdb {
         virtual ~WritableFile() = 0;
         // interfaces
         virtual Status append(const Slice& data) = 0;
-        virtual Status close() = 0;
-        virtual Status flush() = 0;
-        virtual Status sync() = 0;
+        virtual Status close() = 0;                     // close flushes internal buf, and closes fd
+        virtual Status flush() = 0;                     // flush flushes internal buf
+        virtual Status sync() = 0;                      // sync flushes buf and underlying system buf
     };  
 
     // an interface for writing log messages.
