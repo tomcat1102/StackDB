@@ -8,12 +8,14 @@
 #include <sys/time.h>       // gettimeofday()
 
 #include <iostream>
+#include <sstream>
 #include <atomic>
 #include <set>
 #include <limits>
 #include <thread>
-#include <cstdio>           // rename()
+#include <cstdio>           // rename(), fwrite(), fflush(), fclose()...
 #include <cstdlib>          // getenv()
+#include <cstdarg>
 #include <cerrno>           // ENOENT, EINTR, EINVAL
 #include <cstring>          // strerror()
 #include "stackdb/env.h"
@@ -316,6 +318,70 @@ namespace stackdb {
         const std::string dirname;
     };
 
+    // posix implementaion for Logger
+    class PosixLogger final : public Logger {
+    public:
+        // takes ownership of fp. write log to the file
+        explicit PosixLogger(FILE *fp) : fp(fp) { assert(fp != nullptr); }
+        ~PosixLogger() override { fclose(fp); }
+
+        // interface. 
+        void logv(const char *format, va_list args) override {
+            // record time as close to lov() as possible
+            struct timeval now_tv;
+            gettimeofday(&now_tv, nullptr);
+            time_t now_seconds = now_tv.tv_sec;
+            struct tm now;
+            localtime_r(&now_seconds, &now);  // convert epoch seconds to local time
+
+            // record thread id. convert thread id type to string type of proper size
+            const int MAX_THREAD_ID_SIZE = 32;
+            std::ostringstream thread_stream;
+            thread_stream << std::this_thread::get_id();
+            std::string thread_id = thread_stream.str();
+            if (thread_id.size() > MAX_THREAD_ID_SIZE) {
+                thread_id.resize(MAX_THREAD_ID_SIZE);
+            }
+
+            // try stack buf in first iter, or dynamic buf if too large in later iter
+            const int STACK_BUF_SIZE = 512;
+            char stack_buf[STACK_BUF_SIZE];
+            static_assert(sizeof(stack_buf) == STACK_BUF_SIZE);
+            int dynamic_buf_size = 0;
+            for (int iter = 0; iter < 2; iter ++) {
+                int buf_size = (iter == 0) ? STACK_BUF_SIZE : dynamic_buf_size;
+                char *buf = (iter == 0) ? stack_buf : new char[dynamic_buf_size];
+                // print header into buf. 'year/month/day-hour:minute:second:micro threadid'
+                int buf_offset = snprintf(buf, buf_size, "%04d/%02d/%02d-%02d:%02d:%02d.%06d %s\n",
+                    now.tm_year + 1900, now.tm_mon + 1, now.tm_mday, 
+                    now.tm_hour, now.tm_min, now.tm_sec, static_cast<int>(now_tv.tv_usec),
+                    thread_id.c_str());
+
+                assert(buf_offset < 28 + MAX_THREAD_ID_SIZE);   // 28 = 10 date + 15 time + 3 delimiter
+                assert(buf_offset < buf_size);
+
+                // print formated args
+                va_list args_copy;          // copy if case failed due to no space
+                va_copy(args_copy, args);
+                buf_offset += vsnprintf(buf + buf_offset, buf_size - buf_offset, format, args_copy);
+                va_end(args_copy);
+                
+                if (buf_offset >= buf_size) {
+                    if (iter == 0) dynamic_buf_size = buf_offset;
+                    assert(false);  // can't fail on dynamic iter
+                }
+
+                assert(buf_offset <= buf_size);
+                fwrite(buf, 1, buf_offset, fp); // actual writing
+                fflush(fp);
+
+                if (iter != 0) delete[] buf;
+            }
+        }
+    private:
+        FILE *const fp;
+    };
+
     // posix implementation for FileLock.
     class PosixFileLock final : public FileLock {
     public:
@@ -583,10 +649,11 @@ namespace stackdb {
 
         Limiter mmap_limiter;
         Limiter fd_limiter; 
-    } singleton;
-
+    };
     // interface to get PosixEnv singleton
+    static Env *singleton = new PosixEnv();
     Env *Env::get_default() {
-        return &singleton;
+        assert(singleton != nullptr);
+        return singleton;
     }
 } // namespace stackdb

@@ -24,7 +24,7 @@ namespace stackdb {
     public:
         Env() = default;
         Env(const Env &) = delete;
-        virtual ~Env() = 0;
+        virtual ~Env() = default;
 
         Env& operator=(const Env&) = delete;
 
@@ -63,7 +63,7 @@ namespace stackdb {
         SequentialFile() = default;
         SequentialFile(const SequentialFile &) = delete;
         SequentialFile& operator=(const SequentialFile&) = delete;
-        virtual ~SequentialFile() = 0;
+        virtual ~SequentialFile() = default;
         // interfaces
         virtual Status read(size_t n, Slice* result, char* scratch) = 0;    // read up to n bytes.
         virtual Status skip(uint64_t n) = 0;    // skip n bytes
@@ -75,7 +75,7 @@ namespace stackdb {
         RandomAccessFile() = default;
         RandomAccessFile(const RandomAccessFile&) = delete;
         RandomAccessFile& operator=(const RandomAccessFile&) = delete;
-        virtual ~RandomAccessFile() = 0;
+        virtual ~RandomAccessFile() = default;
         // interfaces
         virtual Status read(uint64_t offset, size_t n, Slice* result, char* scratch) const = 0;   // read up to n bytes at offset
     };
@@ -86,7 +86,7 @@ namespace stackdb {
         WritableFile() = default;
         WritableFile(const WritableFile&) = delete;
         WritableFile& operator=(const WritableFile&) = delete;
-        virtual ~WritableFile() = 0;
+        virtual ~WritableFile() = default;
         // interfaces
         virtual Status append(const Slice& data) = 0;
         virtual Status close() = 0;                     // close flushes internal buf, and closes fd
@@ -100,9 +100,9 @@ namespace stackdb {
         Logger() = default;
         Logger(const Logger&) = delete;
         Logger& operator=(const Logger&) = delete;
-        virtual ~Logger() = 0;
+        virtual ~Logger() = default;
         // interface. write an entry to the log file with the specified format.
-        virtual void logv(const char* format, va_list ap) = 0;
+        virtual void logv(const char *format, va_list ap) = 0;
     };
 
     // identifies a locked file.
@@ -111,7 +111,7 @@ namespace stackdb {
         FileLock() = default;
         FileLock(const FileLock&) = delete;
         FileLock& operator=(const FileLock&) = delete;
-        virtual ~FileLock() = 0;
+        virtual ~FileLock() = default;
     };
 
     // log the specified data to *info_log if info_log is non-null.
