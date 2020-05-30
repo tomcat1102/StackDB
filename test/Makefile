@@ -18,7 +18,7 @@ TARGET_ARCH=
 LOADLIBES=
 LDLIBS=
 
-SOURCES = $(shell find . -name '*.cpp')
+SOURCES = $(shell find . -name '*_test.cpp')
 OBJECTS = $(patsubst ./%.cpp, %.o, $(SOURCES))
 EXECUTE = $(patsubst ./%.cpp, %, $(SOURCES))
 
@@ -46,7 +46,7 @@ clean:
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $< 
 
-%: %.o $(shell find ../src \( -name '*.o' ! -name '*helloworld.o' \))
+%: %.o $(shell find ../src \( -name '*.o' ! -name '*helloworld.o' \)) test_util.o
 	$(CXX) $(CXXFLAGS) -o $@ $^ 
 
 # generate depencies to headers

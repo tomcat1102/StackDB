@@ -2,6 +2,8 @@
 #define STACKDB_RANDOM_H
 
 #include <cstdint>
+#include <ctime>
+#include <iostream>
 
 namespace stackdb {
     // a simple random number generator
@@ -12,6 +14,9 @@ namespace stackdb {
             if (seed == 0 || seed == 2147483647L) {
                 seed = 1;
             }
+        }
+        static uint32_t time_seed() {
+            return time(nullptr);
         }
 
         // return a pseudo random number in [0, 2^31 -1]
