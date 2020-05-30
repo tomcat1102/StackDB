@@ -129,5 +129,5 @@ int main () {
         consume_decimal_number_no_digits_test(std::string("\177123", 4));
         consume_decimal_number_no_digits_test(std::string("\377123", 4));
     }
-    std::cout << "ok!" << std::endl;
+    return 0;
 }

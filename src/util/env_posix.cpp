@@ -19,17 +19,20 @@
 #include <cerrno>           // ENOENT, EINTR, EINVAL
 #include <cstring>          // strerror()
 #include "stackdb/env.h"
+#include "../../test/env_posix_test_helper.h"
 
 // NEED: LockTable requires lock primitives. PosixEnv requires many more
 namespace stackdb {
-    int config_read_fd_limit = -1;                                          // limit on number of open read-only fds. if < 0, reset by max_open_files()
-    const static int DEFAULT_MMAP_LIMIT = (sizeof(void *) >= 8) ? 1000 : 0; // up to 1000 mmap regions for 64-bit binaries, none for 32-bit, 
-    const static int WRITABLE_FILE_BUFFER_SIZE = 64 * 1024;                 //  because 64-bit has much more virtual mem space for mmap()
 #if HAVE_O_CLOEXEC
     const static int OPEN_BASE_FLAGS = O_CLOEXEC;
 #else
     const static int OPEN_BASE_FLAGS = 0;
 #endif
+    const static int WRITABLE_FILE_BUFFER_SIZE = 64 * 1024;                 //  because 64-bit has much more virtual mem space for mmap()
+    const static int DEFAULT_MMAP_LIMIT = (sizeof(void *) >= 8) ? 1000 : 0; // up to 1000 mmap regions for 64-bit binaries, none for 32-bit, 
+
+    int config_read_fd_limit = -1;                                          // limit on number of open read-only fds. if < 0, reset by max_open_files()
+    int config_mmap_limit = DEFAULT_MMAP_LIMIT;
 
     // represent posix error with Status
     static Status posix_error(const std::string &context, int err_num) {
@@ -417,14 +420,16 @@ namespace stackdb {
             return Status::OK();
         }
 
-        Status new_random_access_File(const std::string& fname, RandomAccessFile** result) override {
+        Status new_random_access_file(const std::string& fname, RandomAccessFile** result) override {
             int fd = ::open(fname.c_str(), O_RDONLY | OPEN_BASE_FLAGS);
             if (fd < 0) {
                 *result = nullptr;
                 return posix_error(fname, errno);
             }
-            if (!mmap_limiter.acquire()) { // if no mmap() available, resort to normal random access file
+            // if no mmap() available, try normal file. if normal not available, error
+            if (!mmap_limiter.acquire()) {
                 *result = new PosixRandomAccessFile(fname, fd, &fd_limiter);
+                return Status::OK();                    
             }
 
             uint64_t file_size; // prepare file size to map whole file
@@ -579,9 +584,21 @@ namespace stackdb {
         }
 
         Status new_logger(const std::string &fname, Logger **result) override {
-            *result = nullptr;
-            std::cout << "PosixEnv::new_logger() not implemented" << std::endl;
-            return Status::NotSupported("PosixEnv::new_logger()");
+            int fd = open(fname.c_str(), O_APPEND | O_WRONLY | O_CREAT | OPEN_BASE_FLAGS, 0644);
+            if (fd < 0) {
+                *result = nullptr;
+                return posix_error(fname, errno);
+            }
+
+            FILE *fp = fdopen(fd, "w");
+            if (fp == nullptr) {
+                close(fd);
+                *result = nullptr;
+                return posix_error(fname, errno);
+            } else {
+                *result = new PosixLogger(fp);
+                return Status::OK();
+            }
         }
 
         uint64_t now_micros() override {
@@ -608,7 +625,7 @@ namespace stackdb {
             return fcntl(fd, F_SETLK, &file_lock);
         }
 
-        int max_mmaps() { return DEFAULT_MMAP_LIMIT; }
+        int max_mmaps() { return config_mmap_limit; }
         int max_open_fds() {
             if (config_read_fd_limit >= 0) {
                 return config_read_fd_limit;
@@ -650,10 +667,62 @@ namespace stackdb {
         Limiter mmap_limiter;
         Limiter fd_limiter; 
     };
-    // interface to get PosixEnv singleton
-    static Env *singleton = new PosixEnv();
+
+    // interface to get PosixEnv singleton. 
+    // SingletonEnv to ensure singleton of PosixEnv. kinda tricky
+    namespace {
+        template<typename EnvType>
+        class SingletonEnv {
+        public:
+            SingletonEnv() {
+                // check env not inited
+            #if !defined(NDEBUG)
+                assert_env_not_inited();
+                env_inited.store(true, std::memory_order_relaxed);
+            #endif
+                // check storage and alignment requirement
+                static_assert(sizeof(env_storage) >= sizeof(EnvType), "env_storage cannot fit Env");
+                static_assert(alignof(env_storage) >= alignof(EnvType), "env_storage cannot meet Env's alignment");
+                new (&env_storage) EnvType();
+            }
+            SingletonEnv(const SingletonEnv&) = delete;
+            ~SingletonEnv() = default;
+            SingletonEnv& operator=(const SingletonEnv&) = delete;
+
+            Env *get_env() { return reinterpret_cast<Env *>(&env_storage); }
+
+            static void assert_env_not_inited() {
+            #if !defined(NDEBG)
+                assert(!env_inited.load(std::memory_order_relaxed));
+            #endif
+            }
+        private:
+            typename std::aligned_storage<sizeof(EnvType), alignof(EnvType)>::type env_storage;
+        #if !defined(NDEBUG)
+            static std::atomic<bool> env_inited;
+        #endif
+        };
+        // don't forget to define env_inited cause it's static in the template 
+    #if !defined(NDEBUG)
+        template <typename EnvType>
+        std::atomic<bool> SingletonEnv<EnvType>::env_inited;
+    #endif
+
+        using PosixDefaultEnv = SingletonEnv<PosixEnv>;
+    } 
+
+    // definition for env_posix_test_help.h funtions
+    void set_read_fd_limit(int limit) {
+        PosixDefaultEnv::assert_env_not_inited();
+        config_read_fd_limit = limit;
+    }
+    void set_mmap_limit(int limit) {
+        PosixDefaultEnv::assert_env_not_inited();
+        config_mmap_limit = limit;
+    }
+
     Env *Env::get_default() {
-        assert(singleton != nullptr);
-        return singleton;
+        static PosixDefaultEnv singleton;
+        return singleton.get_env();
     }
 } // namespace stackdb

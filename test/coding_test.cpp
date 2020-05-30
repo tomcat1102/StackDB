@@ -180,6 +180,4 @@ int main() {
         assert(std::string(200, 'x') == v.to_string());
         assert(input.to_string() == "");
     }
-
-    std::cout << "ok!" << std::endl;
 }

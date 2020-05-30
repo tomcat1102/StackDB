@@ -21,6 +21,5 @@ int main() {
         Status& self_moved_reference = self_moved;
         self_moved_reference = std::move(self_moved);
     }
-    
-    std::cout << "ok!" << std::endl;
+    return 0;
 }

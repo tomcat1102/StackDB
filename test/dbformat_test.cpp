@@ -105,5 +105,5 @@ int main() {
         InternalKey invalid_key;
         assert(invalid_key.debug_string() == "(bad)");
     }
-    std::cout << "ok!" << std::endl;
+    return 0;
 }

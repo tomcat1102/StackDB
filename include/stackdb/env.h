@@ -32,7 +32,7 @@ namespace stackdb {
 
         // Env interfaces
         virtual Status new_sequential_file(const std::string& fname, SequentialFile** result) = 0;      // result can be accessed at one time
-        virtual Status new_random_access_File(const std::string& fname, RandomAccessFile** result) = 0; // result can be accessed concurrently
+        virtual Status new_random_access_file(const std::string& fname, RandomAccessFile** result) = 0; // result can be accessed concurrently
         virtual Status new_writable_file(const std::string& fname, WritableFile** result) = 0;          // one time
         virtual Status new_appendable_file(const std::string& fname, WritableFile** result) {           // one time
             return Status::NotSupported("new_appendable_file", fname);                                  // not supported by default
