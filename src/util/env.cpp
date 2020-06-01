@@ -3,7 +3,7 @@
 
 namespace stackdb {
 
-void log(Logger* info_log, const char* format, ...) {
+void logv(Logger* info_log, const char* format, ...) {
     if (info_log != nullptr) {
         va_list ap;
 
@@ -57,3 +57,4 @@ Status read_file_to_string(Env* env, const std::string& fname, std::string* data
 }
 
 }
+

@@ -115,7 +115,7 @@ namespace stackdb {
     };
 
     // log the specified data to *info_log if info_log is non-null.
-    void log(Logger* info_log, const char* format, ...);
+    void logv(Logger* info_log, const char* format, ...);
 
     // a utility routine: write "data" to the named file.
     Status write_string_to_file(Env* env, const Slice& data, const std::string& fname);
@@ -125,3 +125,4 @@ namespace stackdb {
 } // namespace stackdb
 
 #endif
+
